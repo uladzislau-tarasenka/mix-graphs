@@ -1,0 +1,42 @@
+{
+  "name": "mix-graphs",
+  "version": "1.0.0",
+  "description": "graph visualization library using several algorithms",
+  "main": "index.ts",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/einfachvlad/mix-graphs.git"
+  },
+  "keywords": [
+    "graph",
+    "visualization",
+    "force-directed",
+    "circular",
+    "layered"
+  ],
+  "author": "u.tarasenka@yandex.by",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/einfachvlad/mix-graphs/issues"
+  },
+  "homepage": "https://github.com/einfachvlad/mix-graphs#readme",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^2.30.0",
+    "@typescript-eslint/parser": "^2.30.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.3",
+    "prettier": "^2.0.5",
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "cytoscape": "^3.14.2",
+    "cytoscape-avsdf": "^1.0.0",
+    "cytoscape-cose-bilkent": "^4.1.0",
+    "cytoscape-dagre": "^2.2.2",
+    "vis-network": "^7.6.2"
+  }
+}

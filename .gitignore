@@ -1,0 +1,7 @@
+lint_reports
+coverage
+.idea
+.vscode
+node_modules
+*.code-workspace
+.eslintcache

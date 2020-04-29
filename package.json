@@ -50,6 +50,7 @@
     "cytoscape-avsdf": "^1.0.0",
     "cytoscape-dagre": "^2.2.2",
     "cytoscape-fcose": "^1.2.1",
+    "vis-data": "^6.5.1",
     "vis-network": "^7.6.2"
   }
 }

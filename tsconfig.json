@@ -5,6 +5,7 @@
         "alwaysStrict": false,
         "baseUrl": "./src",
         "checkJs": true,
+        "declaration": true,
         "esModuleInterop": true,
         "module": "esnext",
         "moduleResolution": "node",

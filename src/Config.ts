@@ -28,6 +28,10 @@ class Config implements IConfig {
     private inputGraph: InputGraph | null;
     private rules: Rule[];
     private ruleCombiner: Rule;
+    private exportConfig: {
+        name: string,
+        type?: ExportTypes
+    } | null;
 
     constructor(container: HTMLElement) {
         this.container = container;
@@ -35,23 +39,24 @@ class Config implements IConfig {
         this.inputGraph = null;
         this.rules = [];
         this.ruleCombiner = { layout: null, subset: null };
+        this.exportConfig = null;
     }
 
     private resetRuleCombiner(): void {
         this.ruleCombiner = { layout: null, subset: null };
     }
 
-    private getNeededLibrary(layout): Library |  Error {
-        const { type, ...rest } = layout;
+    private getNeededLibrary(subset, layout): Library |  Error {
+        const { type } = layout;
 
         switch (type) {
             case Layouts.Fa2: {
-                return new VisLibrary(this.container, rest);
+                return new VisLibrary(this.container, subset, layout);
             }
             case Layouts.Avsdf:
             case Layouts.Cose:
             case Layouts.Dagre: {
-                return new CytoscapeLibrary(this.container, rest);
+                return new CytoscapeLibrary(this.container, subset, layout);
             }
 
             default: {
@@ -64,7 +69,7 @@ class Config implements IConfig {
         console.log(rule);
     }
 
-    private getSubGraph(subset: GraphSubsetDescription): InputGraph {
+    private getSubGraph(subset: GraphSubsetDescription, ): InputGraph {
         const { type, nodes, edges, groups } = this.inputGraph as InputGraph;
         const filteredNodes = this.getFilteredNodes(nodes, subset);
         const filteredEdges = this.getFilteredEdges(edges, filteredNodes);
@@ -87,16 +92,26 @@ class Config implements IConfig {
         const nodesIds = nodes.map(node => node.id);
 
         return edges.filter(({ source, target }) => {
-            debugger;
+            const hasSourceInGraph = this.graph?.nodes.find(node => node.id === source);
+            const hasTargetInGraph = this.graph?.nodes.find(node => node.id === target);
+
             let hasSource = false;
             let hasTarget = false;
 
             for (const id of nodesIds) {
                 if (source === id) {
+                    if (hasTargetInGraph) {
+                        return true;
+                    }
+
                     hasSource = true;
                 }
 
                 if (target === id) {
+                    if (hasSourceInGraph) {
+                        return true;
+                    }
+
                     hasTarget = true;
                 }
 
@@ -124,18 +139,14 @@ class Config implements IConfig {
         this.inputGraph = inputGraph;
     }
 
-    export(exportName: string, exportType?: ExportTypes): void {
-        const canvas = this.container.querySelector('canvas');
-
-        if (canvas) {
-            FileSaver.saveCanvasAs(canvas, exportName, exportType);
-        }
+    export(name: string, type?: ExportTypes): void {
+        this.exportConfig = { name, type };
     }
 
     async build(): Promise<void> {
         for (const { subset, layout } of this.rules) {
             const subGraph = this.getSubGraph(subset as GraphSubsetDescription);
-            const library = this.getNeededLibrary(layout);
+            const library = this.getNeededLibrary(subset, layout);
 
             this.checkRule({ subset, layout });
 
@@ -143,6 +154,16 @@ class Config implements IConfig {
                 library.setBaseGraph(this.graph);
                 library.addSubgraph(subGraph);
                 this.graph = await library.visualize();
+            }
+        }
+
+        if (this.exportConfig) {
+            const canvas = this.container.querySelector('canvas');
+
+            if (canvas) {
+                const { name, type } = this.exportConfig;
+
+                FileSaver.saveCanvasAs(canvas, name, type);
             }
         }
     }

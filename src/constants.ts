@@ -1,7 +1,7 @@
 export enum Layouts {
     Avsdf = 'avsdf',
     Cose = 'fcose',
-    Dagre = 'darge',
+    Dagre = 'dagre',
     Fa2 = 'fa2',
 }
 

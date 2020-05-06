@@ -1,5 +1,8 @@
 import { Layouts } from './constants'
 
+export type Dictionary<T> = Record<string, T>;
+export type GenericObject = Dictionary<any>;
+
 export type GraphSubsetDescription = {
     group?: number,
     id?: number,
@@ -37,8 +40,6 @@ export type Position = {
 
 export type InternalNode = Node & Position;
 
-export type InternalEdge = Edge & Position;
-
 export type Group = {
     id: number,
     label: string,
@@ -54,7 +55,7 @@ export type InputGraph = {
 export type InternalGraph = {
     type: string,
     nodes: InternalNode[],
-    edges: InternalEdge[],
+    edges: Edge[],
     groups?: Group[],
 };
 

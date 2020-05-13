@@ -1,9 +1,9 @@
 import { Library } from 'Library';
-import { PositionedGraph, InputGraph, Edge, Node, PositionedNode } from './types';
+import { CytoscapeLayoutDescription, Edge, InputGraph, Node, PositionedGraph, PositionedNode } from './types';
 declare class CytoscapeLibrary extends Library {
     private instance;
     private options;
-    constructor(container: HTMLElement, options: any);
+    constructor(container: HTMLElement, options: CytoscapeLayoutDescription);
     protected transformToLibraryStructure(graph: PositionedGraph | InputGraph): {
         nodes: {
             data: {

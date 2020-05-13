@@ -10,11 +10,11 @@ export type GraphSubsetDescription = {
     type?: string,
 };
 
-export type LayoutDescription = {
+export type LayoutDescriptionBase = {
     type: Layouts,
 };
 
-export type Fa2LayoutDescription = LayoutDescription & {
+export type Fa2LayoutDescription = LayoutDescriptionBase & {
     avoidOverlap?: number,
     centralGravity?: number,
     damping?: number,
@@ -24,7 +24,7 @@ export type Fa2LayoutDescription = LayoutDescription & {
     theta?: number,
 }
 
-export type AvsdfLayoutDescription = LayoutDescription & {
+export type AvsdfLayoutDescription = LayoutDescriptionBase & {
     animate?: Animation | false,
     animationDuration?: number,
     fit?: boolean,
@@ -36,7 +36,7 @@ export type AvsdfLayoutDescription = LayoutDescription & {
     stop?(): void,
 }
 
-export type CoseLayoutDescription = LayoutDescription & {
+export type CoseLayoutDescription = LayoutDescriptionBase & {
     animate?: Animation | false,
     animationDuration?: number,
     animationEasing?: string,
@@ -68,7 +68,7 @@ export type CoseLayoutDescription = LayoutDescription & {
     stop?(): void,
 }
 
-export type DagreLayoutDescription = LayoutDescription & {
+export type DagreLayoutDescription = LayoutDescriptionBase & {
     animate?: Animation | false,
     animationDuration?: number,
     animationEasing?: string,
@@ -89,6 +89,10 @@ export type DagreLayoutDescription = LayoutDescription & {
     stop?(): void,
     transform?(node, pos): number,
 }
+
+export type CytoscapeLayoutDescription = AvsdfLayoutDescription | DagreLayoutDescription | CoseLayoutDescription;
+
+export type LayoutDescription = Fa2LayoutDescription | CytoscapeLayoutDescription;
 
 export type Rule = {
     subset: GraphSubsetDescription | null,

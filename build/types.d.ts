@@ -7,10 +7,10 @@ export declare type GraphSubsetDescription = {
     label?: string;
     type?: string;
 };
-export declare type LayoutDescription = {
+export declare type LayoutDescriptionBase = {
     type: Layouts;
 };
-export declare type Fa2LayoutDescription = LayoutDescription & {
+export declare type Fa2LayoutDescription = LayoutDescriptionBase & {
     avoidOverlap?: number;
     centralGravity?: number;
     damping?: number;
@@ -19,7 +19,7 @@ export declare type Fa2LayoutDescription = LayoutDescription & {
     springLength?: number;
     theta?: number;
 };
-export declare type AvsdfLayoutDescription = LayoutDescription & {
+export declare type AvsdfLayoutDescription = LayoutDescriptionBase & {
     animate?: Animation | false;
     animationDuration?: number;
     fit?: boolean;
@@ -30,7 +30,7 @@ export declare type AvsdfLayoutDescription = LayoutDescription & {
     ready?(): void;
     stop?(): void;
 };
-export declare type CoseLayoutDescription = LayoutDescription & {
+export declare type CoseLayoutDescription = LayoutDescriptionBase & {
     animate?: Animation | false;
     animationDuration?: number;
     animationEasing?: string;
@@ -61,7 +61,7 @@ export declare type CoseLayoutDescription = LayoutDescription & {
     ready?(): void;
     stop?(): void;
 };
-export declare type DagreLayoutDescription = LayoutDescription & {
+export declare type DagreLayoutDescription = LayoutDescriptionBase & {
     animate?: Animation | false;
     animationDuration?: number;
     animationEasing?: string;
@@ -82,6 +82,8 @@ export declare type DagreLayoutDescription = LayoutDescription & {
     stop?(): void;
     transform?(node: any, pos: any): number;
 };
+export declare type CytoscapeLayoutDescription = AvsdfLayoutDescription | DagreLayoutDescription | CoseLayoutDescription;
+export declare type LayoutDescription = Fa2LayoutDescription | CytoscapeLayoutDescription;
 export declare type Rule = {
     subset: GraphSubsetDescription | null;
     layout: LayoutDescription | null;

@@ -1,9 +1,9 @@
 import { Library } from 'Library';
-import { Edge, PositionedNode } from './types';
+import { Edge, Fa2LayoutDescription, PositionedNode } from './types';
 declare class VisLibrary extends Library {
     private instance;
     private options;
-    constructor(container: HTMLElement, options: any);
+    constructor(container: HTMLElement, options: Fa2LayoutDescription);
     protected getTransformedToLibraryNodes(nodes: (Node | PositionedNode)[]): (Node | PositionedNode)[];
     protected getTransformedToLibraryEdges(edges: Edge[]): {
         source: number;

@@ -1,13 +1,13 @@
 import { Network } from 'vis-network';
 
 import { Library } from 'Library';
-import { Edge, GenericObject, PositionedNode } from './types';
+import { Edge, Fa2LayoutDescription, GenericObject, PositionedNode } from './types';
 
 class VisLibrary extends Library {
     private instance: Network;
     private options: GenericObject;
 
-    constructor (container: HTMLElement, options) {
+    constructor (container: HTMLElement, options: Fa2LayoutDescription) {
         super(container);
         const { type, ...fa2Settings } = options;
         this.options = {

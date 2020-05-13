@@ -4,11 +4,20 @@ import fcose from 'cytoscape-fcose';
 import dagre from 'cytoscape-dagre';
 
 import { Library } from 'Library';
-import { PositionedGraph, InputGraph, Edge, GenericObject, Node, PositionedNode, Group } from './types';
+import {
+    CytoscapeLayoutDescription,
+    Edge,
+    GenericObject,
+    Group,
+    InputGraph,
+    Node,
+    PositionedGraph,
+    PositionedNode,
+} from './types';
 
-cytoscape.use( avsdf );
-cytoscape.use( fcose );
-cytoscape.use( dagre );
+cytoscape.use(avsdf);
+cytoscape.use(fcose);
+cytoscape.use(dagre);
 
 const STYLE = [
     {
@@ -45,14 +54,14 @@ const STYLE = [
 
 class CytoscapeLibrary extends Library {
     private instance: cytoscape;
-    private options: GenericObject; 
+    private options: GenericObject;
 
-    constructor (container: HTMLElement, options) {
+    constructor(container: HTMLElement, options: CytoscapeLayoutDescription) {
         super(container);
         this.options = options;
     }
     // @ts-ignore
-    protected transformToLibraryStructure (graph: PositionedGraph | InputGraph) {
+    protected transformToLibraryStructure(graph: PositionedGraph | InputGraph) {
         const { edges, nodes, groups } = graph;
 
         return {
@@ -61,7 +70,7 @@ class CytoscapeLibrary extends Library {
         }
     }
     // @ts-ignore
-    protected getTransformedToLibraryNodes (nodes: ( Node| PositionedNode)[]) {
+    protected getTransformedToLibraryNodes(nodes: (Node | PositionedNode)[]) {
         return nodes.map(node => {
             const nodeCopy = { data: { ...node } };
             // @ts-ignore
@@ -91,17 +100,17 @@ class CytoscapeLibrary extends Library {
         });
     }
 
-    private getTransformedToLibrarGroups (groups: Group[]) {
+    private getTransformedToLibrarGroups(groups: Group[]) {
         return groups.map(group => {
-            const groupCopy = {...group };
+            const groupCopy = { ...group };
 
             return { data: groupCopy };
         });
     }
 
-    protected getTransformedToLibraryEdges (edges: Edge[]) {
+    protected getTransformedToLibraryEdges(edges: Edge[]) {
         return edges.map(edge => {
-            const edgeCopy = {...edge };
+            const edgeCopy = { ...edge };
             // @ts-ignore
             edgeCopy.directed = String(!edgeCopy.isBidirected);
             delete edgeCopy.isBidirected;
@@ -110,10 +119,10 @@ class CytoscapeLibrary extends Library {
         });
     }
 
-    protected getTransformedToMainTypeNodes (nodes): PositionedNode[] {
+    protected getTransformedToMainTypeNodes(nodes): PositionedNode[] {
         const groupsIds: number[] = [];
         const transformedNodes = nodes.map(node => {
-            const nodeCopy = {...node.data };
+            const nodeCopy = { ...node.data };
 
             nodeCopy.id = Number(nodeCopy.id);
 
@@ -130,9 +139,9 @@ class CytoscapeLibrary extends Library {
         return transformedNodes.filter(node => !groupsIds.includes(node.id));
     }
 
-    protected getTransformedToMainTypeEdges (edges): Edge[] {
+    protected getTransformedToMainTypeEdges(edges): Edge[] {
         return edges.map(edge => {
-            const edgeCopy = {...edge.data };
+            const edgeCopy = { ...edge.data };
 
             edgeCopy.source = Number(edgeCopy.source);
             edgeCopy.target = Number(edgeCopy.target);
@@ -149,17 +158,17 @@ class CytoscapeLibrary extends Library {
         });
     }
 
-    async visualize (unlock = false) {
+    async visualize(unlock = false) {
         const { type, ...rest } = this.options;
         this.instance = cytoscape({ container: this.container, elements: this.internalData, layout: { name: type, ...rest }, style: STYLE });
 
         await new Promise((resolve, reject) => {
             const onStabilized = () => {
-                this.internalData.nodes = this.internalData.nodes.map(node => ({ data: {...node.data, ...this.instance.$(`node[id="${node.data.id}"]`).position()} }));
+                this.internalData.nodes = this.internalData.nodes.map(node => ({ data: { ...node.data, ...this.instance.$(`node[id="${node.data.id}"]`).position() } }));
                 resolve();
             }
             this.instance.ready(onStabilized);
-          });
+        });
 
         if (unlock) {
             setTimeout(() => { this.instance.nodes().unlock() }, 2000);

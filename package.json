@@ -21,7 +21,9 @@
     "visualization",
     "force-directed",
     "circular",
-    "layered"
+    "layered",
+    "vis",
+    "cytoscapejs"
   ],
   "author": "u.tarasenka@yandex.by",
   "license": "UNLICENSED",

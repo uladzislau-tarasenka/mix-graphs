@@ -4,7 +4,7 @@ import fcose from 'cytoscape-fcose';
 import dagre from 'cytoscape-dagre';
 
 import { Library } from 'Library';
-import { InternalGraph, InputGraph, Edge, GenericObject, Node, InternalNode } from './types';
+import { PositionedGraph, InputGraph, Edge, GenericObject, Node, PositionedNode, Group } from './types';
 
 cytoscape.use( avsdf );
 cytoscape.use( fcose );
@@ -15,14 +15,21 @@ const STYLE = [
         selector: 'node',
         style: {
             'label': 'data(label)',
-            'text-valign': 'center',
+            'text-valign': 'bottom',
             'color': '#000000',
-            'background-color': '#3a7ecf'
+            'background-color': '#3a7ecf',
+            'font-size': '10px',
+        }
+    }, {
+        selector: ':parent',
+        style: {
+            'background-opacity': 0.333,
+            'border-color': '#2B65EC',
+            'text-valign': 'top',
         }
     }, {
         selector: 'edge',
         style: {
-            'width': 2,
             'line-color': '#3a7ecf',
             'opacity': 0.5,
             'target-arrow-color': '#3a7ecf',
@@ -33,54 +40,69 @@ const STYLE = [
         style: {
             'curve-style': 'bezier',
         }
-    }
+    },
 ];
 
-class CytoscapeLibrary implements Library {
+class CytoscapeLibrary extends Library {
     private instance: cytoscape;
-    private container: HTMLElement;
     private options: GenericObject; 
-    private initialGraph: InternalGraph | InputGraph;
-    private internalData: {
-        nodes: GenericObject[],
-        edges: GenericObject[],
-    };
 
-    constructor (container: HTMLElement, graph, options) {
-        this.container = container;
+    constructor (container: HTMLElement, options) {
+        super(container);
         this.options = options;
-        this.initialGraph = graph;
-        this.internalData = {
-            nodes: [],
-            edges: [],
-        };
     }
-
-    private transformToLibraryStructure (graph: InternalGraph | InputGraph) {
-        const { edges, nodes } = graph;
+    // @ts-ignore
+    protected transformToLibraryStructure (graph: PositionedGraph | InputGraph) {
+        const { edges, nodes, groups } = graph;
 
         return {
-            nodes: this.getTransformedToLibraryNodes(nodes),
+            nodes: [...this.getTransformedToLibraryNodes(nodes), ...this.getTransformedToLibrarGroups(groups as Group[])],
             edges: this.getTransformedToLibraryEdges(edges),
         }
     }
-
-    private getTransformedToLibraryNodes (nodes: (Node| InternalNode)[]) {
+    // @ts-ignore
+    protected getTransformedToLibraryNodes (nodes: ( Node| PositionedNode)[]) {
         return nodes.map(node => {
-            const nodeCopy = {...node };
-
-            if (nodeCopy.x && nodeCopy.y) {
+            const nodeCopy = { data: { ...node } };
+            // @ts-ignore
+            if (nodeCopy.data.x && nodeCopy.data.y) {
+                // @ts-ignore
                 nodeCopy.locked = true;
+                // @ts-ignore
+                nodeCopy.renderedPosition = {
+                    // @ts-ignore
+                    x: nodeCopy.data.x,
+                    // @ts-ignore
+                    y: nodeCopy.data.y,
+                };
+                // @ts-ignore
+                delete nodeCopy.data.x;
+                // @ts-ignore
+                delete nodeCopy.data.y;
             }
 
-            return { data: nodeCopy };
+            if (nodeCopy.data.group) {
+                // @ts-ignore
+                nodeCopy.data.parent = String(nodeCopy.data.group);
+                delete nodeCopy.data.group;
+            }
+
+            return nodeCopy;
         });
     }
 
-    private getTransformedToLibraryEdges (edges: Edge[]) {
+    private getTransformedToLibrarGroups (groups: Group[]) {
+        return groups.map(group => {
+            const groupCopy = {...group };
+
+            return { data: groupCopy };
+        });
+    }
+
+    protected getTransformedToLibraryEdges (edges: Edge[]) {
         return edges.map(edge => {
             const edgeCopy = {...edge };
-
+            // @ts-ignore
             edgeCopy.directed = String(!edgeCopy.isBidirected);
             delete edgeCopy.isBidirected;
 
@@ -88,31 +110,27 @@ class CytoscapeLibrary implements Library {
         });
     }
 
-    private transformToMainType (data): InternalGraph {
-        const { edges, nodes } = data;
-        const { type, groups } = this.initialGraph;
-
-        return {
-            type,
-            groups,
-            nodes: this.getTransformedToMainTypeNodes(nodes),
-            edges: this.getTransformedToMainTypeEdges(edges),
-        }
-    }
-
-    private getTransformedToMainTypeNodes (nodes): InternalNode[] {
-        return nodes.map(node => {
+    protected getTransformedToMainTypeNodes (nodes): PositionedNode[] {
+        const groupsIds: number[] = [];
+        const transformedNodes = nodes.map(node => {
             const nodeCopy = {...node.data };
 
             nodeCopy.id = Number(nodeCopy.id);
 
-            delete nodeCopy.locked;
+            if (nodeCopy.parent) {
+                nodeCopy.group = Number(nodeCopy.parent);
+                groupsIds.push(nodeCopy.group);
+            }
+
+            delete nodeCopy.parent;
 
             return nodeCopy;
         });
+
+        return transformedNodes.filter(node => !groupsIds.includes(node.id));
     }
 
-    private getTransformedToMainTypeEdges (edges): Edge[] {
+    protected getTransformedToMainTypeEdges (edges): Edge[] {
         return edges.map(edge => {
             const edgeCopy = {...edge.data };
 
@@ -131,24 +149,9 @@ class CytoscapeLibrary implements Library {
         });
     }
 
-    setBaseGraph (graph: InternalGraph | null) {
-        if (graph !== null) {
-            const { nodes, edges } = this.transformToLibraryStructure(graph);
-
-            this.internalData.nodes = nodes;
-            this.internalData.edges = edges;
-        }
-    }
-
-    addSubgraph (subGraph: InputGraph) {
-        const { nodes, edges } = this.transformToLibraryStructure(subGraph);
-
-        this.internalData.nodes = this.internalData.nodes.concat(nodes);
-        this.internalData.edges = this.internalData.edges.concat(edges);
-    }
-
-    async visualize () {
-        this.instance = cytoscape({ container: this.container, elements: this.internalData, layout: { name: this.options.type }, style: STYLE });
+    async visualize (unlock = false) {
+        const { type, ...rest } = this.options;
+        this.instance = cytoscape({ container: this.container, elements: this.internalData, layout: { name: type, ...rest }, style: STYLE });
 
         await new Promise((resolve, reject) => {
             const onStabilized = () => {
@@ -157,6 +160,10 @@ class CytoscapeLibrary implements Library {
             }
             this.instance.ready(onStabilized);
           });
+
+        if (unlock) {
+            setTimeout(() => { this.instance.nodes().unlock() }, 2000);
+        }
 
         return this.transformToMainType(this.internalData);
     }

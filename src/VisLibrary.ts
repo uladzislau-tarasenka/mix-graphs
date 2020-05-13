@@ -1,53 +1,33 @@
 import { Network } from 'vis-network';
-import { DataSet } from 'vis-data';
 
 import { Library } from 'Library';
-import { InternalGraph, InputGraph, Edge, GenericObject, InternalNode } from './types';
+import { Edge, GenericObject, PositionedNode } from './types';
 
-class VisLibrary implements Library {
+class VisLibrary extends Library {
     private instance: Network;
-    private container: HTMLElement;
     private options: GenericObject;
-    private initialGraph: InternalGraph | InputGraph;
-    private internalData: {
-        nodes: GenericObject[],
-        edges: GenericObject[],
-    };
 
-    constructor (container: HTMLElement, graph, options) {
-        this.container = container;
+    constructor (container: HTMLElement, options) {
+        super(container);
+        const { type, ...fa2Settings } = options;
         this.options = {
             edges: {
                 smooth: false,
             },
             physics: {
-                forceAtlas2Based: {...options},
+                forceAtlas2Based: {...fa2Settings},
                 solver: 'forceAtlas2Based',
             }
         };
-
-        this.initialGraph = graph;
-
-        this.internalData = {
-            nodes: [],
-            edges: [],
-        };
     }
 
-    private transformToLibraryStructure (graph: InternalGraph | InputGraph) {
-        const { edges, nodes } = graph;
-
-        return {
-            nodes: this.getTransformedToLibraryNodes(nodes),
-            edges: this.getTransformedToLibraryEdges(edges),
-        }
-    }
-
-    private getTransformedToLibraryNodes (nodes: (Node| InternalNode)[]) {
+    protected getTransformedToLibraryNodes (nodes: (Node| PositionedNode)[]) {
         return nodes.map(node => {
-            const nodeCopy = {...node };
+            const nodeCopy = {...node } as Node| PositionedNode;
 
+            // @ts-ignore
             if (nodeCopy.x && nodeCopy.y) {
+                // @ts-ignore
                 nodeCopy.fixed = true;
             }
 
@@ -55,12 +35,15 @@ class VisLibrary implements Library {
         });
     }
 
-    private getTransformedToLibraryEdges (edges: Edge[]) {
+    protected getTransformedToLibraryEdges (edges: Edge[]) {
         return edges.map(edge => {
             const edgeCopy = {...edge };
 
+            // @ts-ignore
             edgeCopy.from = edgeCopy.source;
+            // @ts-ignore
             edgeCopy.to = edgeCopy.target;
+            // @ts-ignore
             edgeCopy.arrows = edgeCopy.isBidirected ? undefined : 'to';
 
             delete edgeCopy.source;
@@ -70,19 +53,7 @@ class VisLibrary implements Library {
         });
     }
 
-    private transformToMainType (data): InternalGraph {
-        const { edges, nodes } = data;
-        const { type, groups } = this.initialGraph;
-
-        return {
-            type,
-            groups,
-            nodes: this.getTransformedToMainTypeNodes(nodes),
-            edges: this.getTransformedToMainTypeEdges(edges),
-        }
-    }
-
-    private getTransformedToMainTypeNodes (nodes): InternalNode[] {
+    protected getTransformedToMainTypeNodes (nodes): PositionedNode[] {
         return nodes.map(node => {
             const nodeCopy = { ...node };
 
@@ -92,7 +63,7 @@ class VisLibrary implements Library {
         });
     }
 
-    private getTransformedToMainTypeEdges (edges): Edge[] {
+    protected getTransformedToMainTypeEdges (edges): Edge[] {
         return edges.map(edge => {
             const edgeCopy = {...edge };
 
@@ -106,22 +77,6 @@ class VisLibrary implements Library {
 
             return edgeCopy;
         });
-    }
-
-    setBaseGraph (graph: InternalGraph | null) {
-        if (graph !== null) {
-            const { nodes, edges } = this.transformToLibraryStructure(graph);
-
-            this.internalData.nodes = nodes;
-            this.internalData.edges = edges;
-        }
-    }
-
-    addSubgraph (subGraph: InputGraph) {
-        const { nodes, edges } = this.transformToLibraryStructure(subGraph);
-
-        this.internalData.nodes = this.internalData.nodes.concat(nodes);
-        this.internalData.edges = this.internalData.edges.concat(edges);
     }
 
     async visualize () {

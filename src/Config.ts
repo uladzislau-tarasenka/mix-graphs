@@ -2,12 +2,25 @@ import {
     Edge,
     GraphSubsetDescription,
     InputGraph,
-    InternalGraph,
+    PositionedGraph,
     LayoutDescription,
     Node,
     Rule,
+    MarkedNode,
+    Dictionary,
+    RuleCheck,
+    Group,
 } from './types';
 
+import {
+    COSE_AVSDF_INTERSECTION_RULE,
+    AVSDF_INTERSECTION_RULE,
+    DARGE_AVSDF_INTERSECTION_RULE,
+    ACYCLE_RULE,
+    LayoutSettingsRules,
+} from './Rules';
+
+import { GraphHelper } from './GraphHelper';
 import { ExportTypes, Layouts } from './constants';
 import { FileSaver } from './FileSaver';
 import { Library } from './Library';
@@ -24,8 +37,9 @@ export interface IConfig {
 
 class Config implements IConfig {
     private container: HTMLElement;
-    private graph: InternalGraph | null;
+    private graph: PositionedGraph | null;
     private inputGraph: InputGraph | null;
+    private markedNodes: Dictionary<MarkedNode>;
     private rules: Rule[];
     private ruleCombiner: Rule;
     private exportConfig: {
@@ -37,6 +51,7 @@ class Config implements IConfig {
         this.container = container;
         this.graph = null;
         this.inputGraph = null;
+        this.markedNodes = {};
         this.rules = [];
         this.ruleCombiner = { layout: null, subset: null };
         this.exportConfig = null;
@@ -46,17 +61,85 @@ class Config implements IConfig {
         this.ruleCombiner = { layout: null, subset: null };
     }
 
-    private getNeededLibrary(subset, layout): Library |  Error {
+    private setMarkOnNodes ():void {
+        for (const node of this.inputGraph?.nodes as Node[]) {
+            for (const { subset, layout } of this.rules) {
+                if (GraphHelper.isFitSubset(node, subset as GraphSubsetDescription)) {
+                    const { id } = node;
+
+                    if (!this.markedNodes[id]) {
+                        this.markedNodes[id] = {
+                            ...node,
+                            markedLayouts: [],
+                        };
+                    }
+
+                    this.markedNodes[id].markedLayouts.push(layout?.type as Layouts);
+                }
+            }
+        }
+    }
+
+    private checkStructureRules () {
+        for (const id in this.markedNodes) {
+            this.checkRule(COSE_AVSDF_INTERSECTION_RULE, { node: this.markedNodes[id] });
+        }
+
+        const markedNodes = Object.values(this.markedNodes);
+
+        const avsdfSubsets = this.rules.
+            filter(({ layout }) => layout?.type === Layouts.Avsdf)
+            .map(({ subset }) => subset);
+
+
+        this.checkRule(AVSDF_INTERSECTION_RULE, { nodes: markedNodes, avsdfSubsets });
+
+        const dagreSubsets = this.rules.
+            filter(({ layout }) => layout?.type === Layouts.Dagre)
+            .map(({ subset }) => subset);
+
+        for (const dagreSubset of dagreSubsets) {
+            const { edges } = this.inputGraph as InputGraph;
+            const filteredNodes = this.getFilteredNodes(markedNodes, dagreSubset as GraphSubsetDescription);
+            const filteredEdges = this.getFilteredEdges(edges, filteredNodes);
+
+            this.checkRule(ACYCLE_RULE, { edges: filteredEdges });
+
+            for (const avsdfSubset of avsdfSubsets) {
+                this.checkRule(DARGE_AVSDF_INTERSECTION_RULE, { markedNodes, avsdfSubset, dagreSubset });
+            }
+        }
+    }
+
+    private checkLayoutRules(subGraph: InputGraph, layout: LayoutDescription) {
+        const { type, ...settings } = layout;
+        const rulesArray = LayoutSettingsRules[type];
+
+        for (const rule of rulesArray) {
+            this.checkRule(rule, { settings, subGraph });
+        }
+    }
+
+    private checkRule({ name, checkFunction }: RuleCheck, params: Dictionary<any>): void {
+        const ruleCheckResult = checkFunction(params);
+
+        if (!ruleCheckResult) {
+            console.warn(`Rule "${name}" is failed with params \n${JSON.stringify(params)}`);
+        }
+    }
+
+    private getNeededLibrary(layout): Library |  Error {
         const { type } = layout;
 
         switch (type) {
             case Layouts.Fa2: {
-                return new VisLibrary(this.container, subset, layout);
+                return new VisLibrary(this.container, layout);
             }
             case Layouts.Avsdf:
             case Layouts.Cose:
             case Layouts.Dagre: {
-                return new CytoscapeLibrary(this.container, subset, layout);
+                // @ts-ignore
+                return new CytoscapeLibrary(this.container, layout);
             }
 
             default: {
@@ -65,27 +148,24 @@ class Config implements IConfig {
         }
     }
 
-    private checkRule(rule: Rule): void {
-        console.log(rule);
-    }
-
-    private getSubGraph(subset: GraphSubsetDescription, ): InputGraph {
-        const { type, nodes, edges, groups } = this.inputGraph as InputGraph;
+    private getSubGraph(subset: GraphSubsetDescription, layoutType: Layouts): InputGraph {
+        const { type, nodes, edges, groups = [] } = this.inputGraph as InputGraph;
         const filteredNodes = this.getFilteredNodes(nodes, subset);
         const filteredEdges = this.getFilteredEdges(edges, filteredNodes);
+        const filteredGroups = layoutType === Layouts.Cose
+            ? this.getFilteredGroups(groups, filteredNodes)
+            : [];
 
         return {
             type,
-            groups,
+            groups: filteredGroups,
             nodes: filteredNodes,
             edges: filteredEdges,
         };
     }
 
     private getFilteredNodes (nodes: Node[], subset: GraphSubsetDescription): Node[] {
-        return nodes.filter(node => {
-            return Object.entries(subset).every(([key, value]) => node[key] === value)
-        });
+        return nodes.filter(node => GraphHelper.isFitSubset(node, subset));
     }
 
     private getFilteredEdges (edges: Edge[], nodes: Node[]): Edge[] {
@@ -124,6 +204,21 @@ class Config implements IConfig {
         });
     }
 
+    private getFilteredGroups (groups: Group[], nodes: Node[]) {
+        const groupsIds = nodes.filter(node => Boolean(node.group)).map(node => node.group);
+
+        return groups.filter(group => groupsIds.includes(group.id));
+    }l
+
+    private async finalDraw () {
+        const library = this.getNeededLibrary({ type: Layouts.Cose });
+
+        if (!(library instanceof Error)) {
+            library.setBaseGraph(this.graph);
+            await library.visualize(true);
+        }
+    }
+
     get(graphSubsetDescription: GraphSubsetDescription): Config {
         this.ruleCombiner.subset = graphSubsetDescription;
         return this;
@@ -144,11 +239,14 @@ class Config implements IConfig {
     }
 
     async build(): Promise<void> {
-        for (const { subset, layout } of this.rules) {
-            const subGraph = this.getSubGraph(subset as GraphSubsetDescription);
-            const library = this.getNeededLibrary(subset, layout);
+        this.setMarkOnNodes();
+        this.checkStructureRules();
 
-            this.checkRule({ subset, layout });
+        for (const { subset, layout } of this.rules) {
+            const subGraph = this.getSubGraph(subset as GraphSubsetDescription, layout?.type as Layouts);
+            const library = this.getNeededLibrary(layout);
+
+            this.checkLayoutRules(subGraph, layout as LayoutDescription);
 
             if (!(library instanceof Error)) {
                 library.setBaseGraph(this.graph);
@@ -156,6 +254,8 @@ class Config implements IConfig {
                 this.graph = await library.visualize();
             }
         }
+
+        await this.finalDraw();
 
         if (this.exportConfig) {
             const canvas = this.container.querySelector('canvas');

@@ -128,7 +128,7 @@ export declare type InputGraph = {
 export declare type PositionedGraph = InputGraph & {
     nodes: PositionedNode[];
 };
-export declare type Warning = {
-    message: string;
-    data: Rule;
+export declare type GenericGraph = {
+    nodes: GenericObject[];
+    edges: GenericObject[];
 };

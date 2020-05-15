@@ -20,12 +20,12 @@ import {
     LayoutSettingsRules,
 } from './Rules';
 
-import { GraphHelper } from './GraphHelper';
+import { GraphHelper } from './utils/GraphHelper';
 import { ExportTypes, Layouts } from './constants';
-import { FileSaver } from './FileSaver';
-import { Library } from './Library';
-import { CytoscapeLibrary } from './CytoscapeLibrary';
-import { VisLibrary } from './VisLibrary';
+import { FileSaver } from './utils/FileSaver';
+import { Library } from './Library/Library';
+import { CytoscapeLibrary } from './Library/CytoscapeLibrary';
+import { VisLibrary } from './Library/VisLibrary';
 
 export interface IConfig {
     get(graphSubsetDescription: GraphSubsetDescription): void,

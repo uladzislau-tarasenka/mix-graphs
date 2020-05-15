@@ -2,7 +2,7 @@ import intersection from 'lodash/intersection';
 
 import { RuleCheck, MarkedNode, GraphSubsetDescription, Edge, LayoutSettingRuleParams } from "./types";
 import { Layouts } from "./constants";
-import { GraphHelper } from "./GraphHelper";
+import { GraphHelper } from "./utils/GraphHelper";
 
 export const COSE_AVSDF_INTERSECTION_RULE: RuleCheck = {
     name: 'Avoiding usage of Cose and Avsdf in subgraphs intersection',

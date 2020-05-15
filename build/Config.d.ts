@@ -26,7 +26,6 @@ declare class Config implements IConfig {
     private getFilteredNodes;
     private getFilteredEdges;
     private getFilteredGroups;
-    l: any;
     private finalDraw;
     get(graphSubsetDescription: GraphSubsetDescription): Config;
     useLayout(layoutDescription: LayoutDescription): void;

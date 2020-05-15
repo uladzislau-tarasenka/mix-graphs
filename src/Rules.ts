@@ -97,18 +97,7 @@ export const COSE_LAYOUT_SETTINGS_RULES: RuleCheck[] = [
 
             return true;
         },
-    }, {
-        name: 'Follow Nesting Factor range',
-        checkFunction: ({ settings, subGraph }: LayoutSettingRuleParams) => {
-            const { nestingFactor } = settings;
-
-            if (nestingFactor > 3) {
-                return false;
-            }
-
-            return true;
-        },
-    },
+    }
 ];
 
 export const AVSDF_LAYOUT_SETTINGS_RULES: RuleCheck[] = [
@@ -123,7 +112,7 @@ export const AVSDF_LAYOUT_SETTINGS_RULES: RuleCheck[] = [
 
             return true;
         },
-    },
+    }
 ];
 
 export const DARGE_LAYOUT_SETTINGS_RULES: RuleCheck[] = [

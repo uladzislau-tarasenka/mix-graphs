@@ -160,11 +160,11 @@ class CytoscapeLibrary extends Library {
 
     async visualize(unlock = false) {
         const { type, ...rest } = this.options;
-        this.instance = cytoscape({ container: this.container, elements: this.internalData, layout: { name: type, ...rest }, style: STYLE });
+        this.instance = cytoscape({ container: this.container, elements: this.internalGraph, layout: { name: type, ...rest }, style: STYLE });
 
         await new Promise((resolve, reject) => {
             const onStabilized = () => {
-                this.internalData.nodes = this.internalData.nodes.map(node => ({ data: { ...node.data, ...this.instance.$(`node[id="${node.data.id}"]`).position() } }));
+                this.internalGraph.nodes = this.internalGraph.nodes.map(node => ({ data: { ...node.data, ...this.instance.$(`node[id="${node.data.id}"]`).position() } }));
                 resolve();
             }
             this.instance.ready(onStabilized);
@@ -174,7 +174,7 @@ class CytoscapeLibrary extends Library {
             setTimeout(() => { this.instance.nodes().unlock() }, 2000);
         }
 
-        return this.transformToMainType(this.internalData);
+        return this.transformToMainType(this.internalGraph);
     }
 }
 

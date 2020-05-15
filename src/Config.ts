@@ -80,7 +80,7 @@ class Config implements IConfig {
         }
     }
 
-    private checkStructureRules () {
+    private checkStructureRules (): void {
         for (const id in this.markedNodes) {
             this.checkRule(COSE_AVSDF_INTERSECTION_RULE, { node: this.markedNodes[id] });
         }
@@ -111,7 +111,7 @@ class Config implements IConfig {
         }
     }
 
-    private checkLayoutRules(subGraph: InputGraph, layout: LayoutDescription) {
+    private checkLayoutRules(subGraph: InputGraph, layout: LayoutDescription): void {
         const { type, ...settings } = layout;
         const rulesArray = LayoutSettingsRules[type];
 
@@ -204,13 +204,13 @@ class Config implements IConfig {
         });
     }
 
-    private getFilteredGroups (groups: Group[], nodes: Node[]) {
+    private getFilteredGroups (groups: Group[], nodes: Node[]): Group[] {
         const groupsIds = nodes.filter(node => Boolean(node.group)).map(node => node.group);
 
         return groups.filter(group => groupsIds.includes(group.id));
-    }l
+    }
 
-    private async finalDraw () {
+    private async finalDraw (): Promise<void> {
         const library = this.getNeededLibrary({ type: Layouts.Cose });
 
         if (!(library instanceof Error)) {

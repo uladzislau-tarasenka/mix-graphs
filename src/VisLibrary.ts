@@ -80,18 +80,18 @@ class VisLibrary extends Library {
     }
 
     async visualize () {
-        this.instance = new Network(this.container, this.internalData, this.options);
+        this.instance = new Network(this.container, this.internalGraph, this.options);
 
         await new Promise((resolve, reject) => {
             const onStabilized = () => {
                 const positions = this.instance.getPositions();
-                this.internalData.nodes = this.internalData.nodes.map(node => ({ ...node, ...positions[node.id] }));
+                this.internalGraph.nodes = this.internalGraph.nodes.map(node => ({ ...node, ...positions[node.id] }));
                 resolve();
             }
             this.instance.on('stabilized', onStabilized);
           });
 
-        return this.transformToMainType(this.internalData);
+        return this.transformToMainType(this.internalGraph);
     }
 }
 

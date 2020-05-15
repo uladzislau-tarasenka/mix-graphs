@@ -145,7 +145,7 @@ export type InputGraph = {
 
 export type PositionedGraph = InputGraph & { nodes: PositionedNode[] };
 
-export type Warning = {
-    message: string,
-    data: Rule
-}
+export type GenericGraph = {
+    nodes: GenericObject[],
+    edges: GenericObject[],
+};

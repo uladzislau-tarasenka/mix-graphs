@@ -1,12 +1,9 @@
-import { InputGraph, PositionedGraph, PositionedNode, Edge, GenericObject, Group } from "./types";
+import { InputGraph, PositionedGraph, PositionedNode, Edge, GenericGraph, Group, GenericObject } from "./types";
 
 export abstract class Library {
-    protected initialGraph: PositionedGraph | InputGraph;
+    protected initialGraph: PositionedGraph;
     protected container: HTMLElement;
-    protected internalData: {
-        nodes: GenericObject[],
-        edges: GenericObject[],
-    };
+    protected internalGraph: GenericGraph;
 
     constructor (container: HTMLElement) {
         this.container = container;
@@ -16,13 +13,13 @@ export abstract class Library {
             nodes: [],
             edges: [],
         };
-        this.internalData = {
+        this.internalGraph = {
             nodes: [],
             edges: [],
         };
     }
 
-    protected transformToLibraryStructure (graph: PositionedGraph | InputGraph) {
+    protected transformToLibraryStructure (graph: PositionedGraph | InputGraph): GenericGraph {
         const { edges, nodes } = graph;
 
         return {
@@ -32,11 +29,11 @@ export abstract class Library {
         }
     }
 
-    protected abstract getTransformedToLibraryNodes (nodes: (Node| PositionedNode)[]): void;
+    protected abstract getTransformedToLibraryNodes (nodes: (Node| PositionedNode)[]): GenericObject[];
 
-    protected abstract getTransformedToLibraryEdges (edges: Edge[]): void;
+    protected abstract getTransformedToLibraryEdges (edges: Edge[]): GenericObject[];
 
-    protected transformToMainType (data): PositionedGraph {
+    protected transformToMainType (data: GenericGraph): PositionedGraph {
         const { edges, nodes } = data;
         const { type, groups } = this.initialGraph;
 
@@ -48,31 +45,29 @@ export abstract class Library {
         }
     }
 
-    protected abstract getTransformedToMainTypeNodes (nodes): PositionedNode[];
+    protected abstract getTransformedToMainTypeNodes (nodes: GenericObject[]): PositionedNode[];
 
-    protected abstract getTransformedToMainTypeEdges (edges): Edge[];
+    protected abstract getTransformedToMainTypeEdges (edges: GenericObject[]): Edge[];
 
-    setBaseGraph (graph: PositionedGraph | null) {
+    setBaseGraph (graph: PositionedGraph | null): void {
         if (graph !== null) {
             const { nodes, edges } = this.transformToLibraryStructure(graph);
 
             this.initialGraph.groups = graph.groups as Group[];
 
-            this.internalData.nodes = nodes;
-            // @ts-ignore
-            this.internalData.edges = edges;
+            this.internalGraph.nodes = nodes;
+            this.internalGraph.edges = edges;
         }
     }
 
-    addSubgraph (subGraph: InputGraph) {
+    addSubgraph (subGraph: InputGraph): void {
         const { nodes, edges } = this.transformToLibraryStructure(subGraph);
 
         this.initialGraph.type = subGraph.type;
         this.initialGraph.groups = this.initialGraph.groups?.concat(subGraph.groups || []);
 
-        this.internalData.nodes = this.internalData.nodes.concat(nodes);
-        // @ts-ignore
-        this.internalData.edges = this.internalData.edges.concat(edges);
+        this.internalGraph.nodes = this.internalGraph.nodes.concat(nodes);
+        this.internalGraph.edges = this.internalGraph.edges.concat(edges);
     }
 
     abstract visualize(unlock?: boolean): Promise<PositionedGraph>

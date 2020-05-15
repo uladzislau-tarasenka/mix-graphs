@@ -65,7 +65,6 @@ export class GraphHelper {
             const nodeNeighbors = vertexList[vertex];
             for (let i = 0; i < nodeNeighbors.length; i++) {
                 const currentNode = nodeNeighbors[i];
-                console.log('parent', vertex, 'Child', currentNode);
                 if (!visited[currentNode] && GraphHelper.detectCycleUtil(vertexList, currentNode, visited, recStack)) {
                     return true;
                 } else if (recStack[currentNode]) {
